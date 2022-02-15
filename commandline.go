@@ -25,44 +25,25 @@ const (
 	builtinPkgPath = "builtin"
 )
 
-// commandLine returns godoc results to w.
+// write writes the godoc in pres to w.
 // Note that it may add a /target path to fs.
-func commandLine(w io.Writer, fs vfs.NameSpace, pres *godoc.Presentation, tmpl *template.Template, args []string) error {
+func write(w io.Writer, fs vfs.NameSpace, pres *godoc.Presentation, tmpl *template.Template, args []string) error {
 	path := args[0]
-	srcMode := pres.SrcMode
-	cmdMode := strings.HasPrefix(path, cmdPrefix)
 	if strings.HasPrefix(path, srcPrefix) {
 		path = strings.TrimPrefix(path, srcPrefix)
-		srcMode = true
 	}
 	var abspath, relpath string
-	if cmdMode {
-		path = strings.TrimPrefix(path, cmdPrefix)
-	} else {
-		abspath, relpath = paths(fs, pres, path)
-	}
+	abspath, relpath = paths(fs, pres, path)
 
 	var mode godoc.PageInfoMode
 	if relpath == builtinPkgPath {
 		// the fake built-in package contains unexported identifiers
 		mode = godoc.NoFiltering | godoc.NoTypeAssoc
 	}
-	if pres.AllMode {
-		mode |= godoc.NoFiltering
-	}
-	if srcMode {
-		// only filter exports if we don't have explicit command-line filter arguments
-		if len(args) > 1 {
-			mode |= godoc.NoFiltering
-		}
-		mode |= godoc.ShowSource
-	}
 
 	// First, try as package unless forced as command.
 	var info *godoc.PageInfo
-	if !cmdMode {
-		info = pres.GetPkgPageInfo(abspath, relpath, mode)
-	}
+	info = pres.GetPkgPageInfo(abspath, relpath, mode)
 
 	// Second, try as command (if the path is not absolute).
 	var cinfo *godoc.PageInfo

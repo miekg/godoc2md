@@ -13,12 +13,10 @@ package godoc2md
 import (
 	"bytes"
 	"fmt"
-	"go/build"
 	"io"
 	"io/ioutil"
 	"log"
 	"path"
-	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -46,7 +44,6 @@ type Config struct {
 	AltPkgTemplate    string
 	SrcLinkHashFormat string
 	SrcLinkFormat     string
-	Goroot            string
 	TabWidth          int
 	ShowTimestamps    bool
 	ShowPlayground    bool
@@ -132,12 +129,6 @@ func bitscapeFunc(text string) string {
 
 //Godoc2md turns your godoc into markdown
 func Godoc2md(args []string, out io.Writer, config *Config) {
-	// use file system of underlying OS
-	fs.Bind("/", vfs.OS(config.Goroot), "/", vfs.BindReplace)
-	// Bind $GOPATH trees into Go root.
-	for _, p := range filepath.SplitList(build.Default.GOPATH) {
-		fs.Bind("/src/pkg", vfs.OS(p), "/src", vfs.BindAfter)
-	}
 	corpus := godoc.NewCorpus(fs)
 	corpus.Verbose = config.Verbose
 	pres = godoc.NewPresentation(corpus)
@@ -145,7 +136,6 @@ func Godoc2md(args []string, out io.Writer, config *Config) {
 	pres.ShowTimestamps = config.ShowTimestamps
 	pres.ShowPlayground = config.ShowPlayground
 	pres.DeclLinks = config.DeclLinks
-	pres.SrcMode = false
 	pres.URLForSrcPos = genSrcPosLinkFunc(config.SrcLinkFormat, config.SrcLinkHashFormat)
 	var tmpl *template.Template
 	if config.AltPkgTemplate != "" {
@@ -157,7 +147,7 @@ func Godoc2md(args []string, out io.Writer, config *Config) {
 	} else {
 		tmpl = readTemplate("package.txt", pkgTemplate)
 	}
-	if err := commandLine(out, fs, pres, tmpl, args); err != nil {
+	if err := write(out, fs, pres, tmpl, args); err != nil {
 		log.Print(err)
 	}
 }

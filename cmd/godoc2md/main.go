@@ -14,17 +14,12 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"runtime"
 
-	"github.com/WillAbides/godoc2md"
+	"github.com/miekg/godoc2md"
 )
 
 var (
 	verbose = flag.Bool("v", false, "verbose mode")
-
-	// file system roots
-	// TODO(gri) consider the invariant that goroot always end in '/'
-	goroot = flag.String("goroot", runtime.GOROOT(), "Go root directory")
 
 	// layout control
 	tabWidth       = flag.Int("tabwidth", 4, "tab width")
@@ -63,7 +58,6 @@ func main() {
 		ShowPlayground:    *showPlayground,
 		ShowExamples:      *showExamples,
 		DeclLinks:         *declLinks,
-		Goroot:            *goroot,
 		SrcLinkHashFormat: *srcLinkHashFormat,
 		SrcLinkFormat:     *srcLinkFormat,
 		Verbose:           *verbose,
