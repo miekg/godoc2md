@@ -15,6 +15,7 @@ const target = "/target"
 func write(w io.Writer, fs vfs.NameSpace, pres *godoc.Presentation, tmpl *template.Template, path string) error {
 
 	fs.Bind(path, vfs.OS(path), "/", vfs.BindReplace)
+	// the . is the importpath being shown, we need to make something sensible from path
 	info := pres.GetPkgPageInfo(path, ".", 0)
 
 	if info == nil {
