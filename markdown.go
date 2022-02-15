@@ -17,66 +17,17 @@ import (
 	"golang.org/x/tools/godoc/vfs"
 )
 
-const (
-	target         = "/target"
-	cmdPrefix      = "cmd/"
-	srcPrefix      = "src/"
-	toolsPath      = "golang.org/x/tools/cmd/"
-	builtinPkgPath = "builtin"
-)
+const target = "/target"
 
 // write writes the godoc in pres to w.
-// Note that it may add a /target path to fs.
 func write(w io.Writer, fs vfs.NameSpace, pres *godoc.Presentation, tmpl *template.Template, args []string) error {
 	path := args[0]
-	if strings.HasPrefix(path, srcPrefix) {
-		path = strings.TrimPrefix(path, srcPrefix)
-	}
-	var abspath, relpath string
-	abspath, relpath = paths(fs, pres, path)
 
-	var mode godoc.PageInfoMode
-	if relpath == builtinPkgPath {
-		// the fake built-in package contains unexported identifiers
-		mode = godoc.NoFiltering | godoc.NoTypeAssoc
-	}
+	abspath, relpath := paths(fs, pres, path)
 
-	// First, try as package unless forced as command.
-	var info *godoc.PageInfo
-	info = pres.GetPkgPageInfo(abspath, relpath, mode)
+	info := pres.GetPkgPageInfo(abspath, relpath, 0)
 
-	// Second, try as command (if the path is not absolute).
-	var cinfo *godoc.PageInfo
-	if !filepath.IsAbs(path) {
-		// First try go.tools/cmd.
-		abspath = pathpkg.Join(pres.PkgFSRoot(), toolsPath+path)
-		cinfo = pres.GetCmdPageInfo(abspath, relpath, mode)
-		if cinfo.IsEmpty() {
-			// Then try $GOROOT/src/cmd.
-			abspath = pathpkg.Join(pres.CmdFSRoot(), cmdPrefix, path)
-			cinfo = pres.GetCmdPageInfo(abspath, relpath, mode)
-		}
-	}
-
-	// determine what to use
-	if info == nil || info.IsEmpty() {
-		if cinfo != nil && !cinfo.IsEmpty() {
-			// only cinfo exists - switch to cinfo
-			info = cinfo
-		}
-	} else if cinfo != nil && !cinfo.IsEmpty() {
-		// both info and cinfo exist - use cinfo if info
-		// contains only subdirectory information
-		if info.PAst == nil && info.PDoc == nil {
-			info = cinfo
-		} else if relpath != target {
-			// The above check handles the case where an operating system path
-			// is provided (see documentation for paths below).  In that case,
-			// relpath is set to "/target" (in anticipation of accessing packages there),
-			// and is therefore not expected to match a command.
-			fmt.Fprintf(w, "use 'godoc %s%s' for documentation on the %s command \n\n", cmdPrefix, relpath, relpath)
-		}
-	}
+	fmt.Fprintf(os.Stderr, "%+v\n", info.PDoc)
 
 	if info == nil {
 		return fmt.Errorf("%s: no such directory or package", args[0])
@@ -85,6 +36,10 @@ func write(w io.Writer, fs vfs.NameSpace, pres *godoc.Presentation, tmpl *templa
 		return info.Err
 	}
 
+	source := pres.URLForSrc(".")
+	println(source)
+
+	println(info.PDoc.ImportPath)
 	if info.PDoc != nil && info.PDoc.ImportPath == target {
 		// Replace virtual /target with actual argument from command line.
 		info.PDoc.ImportPath = args[0]

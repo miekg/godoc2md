@@ -14,7 +14,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"path"
 	"strings"
@@ -41,7 +40,6 @@ var (
 
 //Config contains config options for Godoc2md
 type Config struct {
-	AltPkgTemplate    string
 	SrcLinkHashFormat string
 	SrcLinkFormat     string
 	TabWidth          int
@@ -127,7 +125,7 @@ func bitscapeFunc(text string) string {
 	return s
 }
 
-//Godoc2md turns your godoc into markdown
+// Godoc2md turns your godoc into markdown
 func Godoc2md(args []string, out io.Writer, config *Config) {
 	corpus := godoc.NewCorpus(fs)
 	corpus.Verbose = config.Verbose
@@ -137,16 +135,9 @@ func Godoc2md(args []string, out io.Writer, config *Config) {
 	pres.ShowPlayground = config.ShowPlayground
 	pres.DeclLinks = config.DeclLinks
 	pres.URLForSrcPos = genSrcPosLinkFunc(config.SrcLinkFormat, config.SrcLinkHashFormat)
-	var tmpl *template.Template
-	if config.AltPkgTemplate != "" {
-		buf, err := ioutil.ReadFile(config.AltPkgTemplate)
-		if err != nil {
-			log.Fatal(err)
-		}
-		tmpl = readTemplate("package.txt", string(buf))
-	} else {
-		tmpl = readTemplate("package.txt", pkgTemplate)
-	}
+
+	tmpl := readTemplate("package.txt", pkgTemplate)
+
 	if err := write(out, fs, pres, tmpl, args); err != nil {
 		log.Print(err)
 	}
