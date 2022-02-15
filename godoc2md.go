@@ -42,10 +42,7 @@ var (
 type Config struct {
 	SrcLinkHashFormat string
 	SrcLinkFormat     string
-	TabWidth          int
 	ShowTimestamps    bool
-	ShowPlayground    bool
-	ShowExamples      bool
 	DeclLinks         bool
 	Verbose           bool
 }
@@ -116,19 +113,18 @@ func bitscapeFunc(text string) string {
 }
 
 // Godoc2md turns your godoc into markdown
-func Godoc2md(path string, out io.Writer, config *Config) {
+func Godoc2md(out io.Writer, path, imp string, config *Config) {
 	corpus := godoc.NewCorpus(fs)
 	corpus.Verbose = config.Verbose
 	pres = godoc.NewPresentation(corpus)
-	pres.TabWidth = config.TabWidth
+	pres.TabWidth = 4
 	pres.ShowTimestamps = config.ShowTimestamps
-	pres.ShowPlayground = config.ShowPlayground
 	pres.DeclLinks = config.DeclLinks
 	pres.URLForSrcPos = genSrcPosLinkFunc(config.SrcLinkFormat, config.SrcLinkHashFormat)
 
 	tmpl := readTemplate("package.txt", pkgTemplate)
 
-	if err := write(out, fs, pres, tmpl, path); err != nil {
+	if err := write(out, fs, pres, tmpl, path, imp); err != nil {
 		log.Print(err)
 	}
 }

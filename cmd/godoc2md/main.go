@@ -22,10 +22,7 @@ var (
 	verbose = flag.Bool("v", false, "verbose mode")
 
 	// layout control
-	tabWidth       = flag.Int("tabwidth", 4, "tab width")
 	showTimestamps = flag.Bool("timestamps", false, "show timestamps with directory listings")
-	showPlayground = flag.Bool("play", false, "enable playground in web interface")
-	showExamples   = flag.Bool("ex", false, "show examples in command line mode")
 	declLinks      = flag.Bool("links", true, "link identifiers to their declarations")
 
 	// The hash format for Github is the default `#L%d`; but other source control platforms do not
@@ -34,6 +31,8 @@ var (
 	srcLinkHashFormat = flag.String("hashformat", "#L%d", "source link URL hash format")
 
 	srcLinkFormat = flag.String("srclink", "", "if set, format for entire source link")
+
+	flgImport = flag.String("import", "", "import path for the package")
 )
 
 func usage() {
@@ -51,15 +50,12 @@ func main() {
 	pkgName := flag.Arg(0)
 
 	config := &godoc2md.Config{
-		TabWidth:          *tabWidth,
 		ShowTimestamps:    *showTimestamps,
-		ShowPlayground:    *showPlayground,
-		ShowExamples:      *showExamples,
 		DeclLinks:         *declLinks,
 		SrcLinkHashFormat: *srcLinkHashFormat,
 		SrcLinkFormat:     *srcLinkFormat,
 		Verbose:           *verbose,
 	}
 
-	godoc2md.Godoc2md(pkgName, os.Stdout, config)
+	godoc2md.Godoc2md(os.Stdout, pkgName, *flgImport, config)
 }
