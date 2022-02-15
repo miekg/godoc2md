@@ -61,5 +61,5 @@ func main() {
 		Verbose:           *verbose,
 	}
 
-	godoc2md.Godoc2md([]string{pkgName}, os.Stdout, config)
+	godoc2md.Godoc2md(pkgName, os.Stdout, config)
 }
