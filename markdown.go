@@ -16,6 +16,12 @@ func write(w io.Writer, fs vfs.NameSpace, pres *godoc.Presentation, tmpl *templa
 
 	fs.Bind(path, vfs.OS(path), "/", vfs.BindReplace)
 	info := pres.GetPkgPageInfo(path, imp, 0)
+	/*
+		for i := range info.Examples {
+			println(info.Examples[i].Name)
+
+		}
+	*/
 
 	if info == nil {
 		return fmt.Errorf("%s: no such directory or package", path)

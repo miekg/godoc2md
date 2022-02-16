@@ -17,3 +17,7 @@ There is some repeating in the command line, which can be reduced, but it's flex
 vanity URLs for your code for instance.
 
 Note: `godoc2md` is a small cmd line that wrap this library.
+
+## Bugs
+
+Examples are not rendered.
