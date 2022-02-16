@@ -15,9 +15,9 @@ cmd/godoc2md/godoc2md -replace '/tmp/dns' -import 'github.com/miekg/dns' /tmp/dn
 
 `-replace` removes the "/tmp/dns" prefix from the files in /tmp/dns and allows for the creation
 of the correct link to the code using the `-import` path. Optionally the git reference can be
-given as well, currently this default to "master".
+given as well, currently this defaults to "master".
 
-Note: `godoc2md` is a small cmd line that wrap this library.
+Note: `godoc2md` is a small cmd line that wrap this library. Library usage can be pulled from it.
 
 ## Bugs
 
