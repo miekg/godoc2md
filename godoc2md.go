@@ -32,7 +32,7 @@ var (
 		"md":          mdFunc,
 		"pre":         preFunc,
 		"kebab":       kebabFunc,
-		"bitscape":    bitscapeFunc, //Escape [] for bitbucket confusion
+		"bitscape":    bitscapeFunc, // Escape [] for bitbucket confusion
 		"trim_prefix": strings.TrimPrefix,
 	}
 )
@@ -45,6 +45,7 @@ type Config struct {
 	DeclLinks         bool
 	Verbose           bool
 	Replace           map[string]string
+	GitRef            string // commit, tag, or branch of the repo.
 }
 
 func commentMdFunc(comment string) string {
@@ -117,8 +118,14 @@ func bitscapeFunc(text string) string {
 	return s
 }
 
-// Transform turns your godoc into markdown.
+// Transform turns your godoc into markdown.The imp (import) path will be used
+// for the generated import statement, the same string is also used for generating
+// file 'files' links, but then it will be prefixed with 'https://'.
 func Transform(out io.Writer, path, imp string, config *Config) error {
+	if config.GitRef == "" {
+		config.GitRef = "master" // main??
+	}
+
 	corpus := godoc.NewCorpus(fs)
 	corpus.Verbose = config.Verbose
 	pres = godoc.NewPresentation(corpus)
@@ -126,6 +133,18 @@ func Transform(out io.Writer, path, imp string, config *Config) error {
 	pres.ShowTimestamps = config.ShowTimestamps
 	pres.DeclLinks = config.DeclLinks
 	pres.URLForSrcPos = genSrcPosLinkFunc(config.SrcLinkFormat, config.SrcLinkHashFormat, config.Replace)
+	pres.URLForSrc = func(s string) string {
+		// We get a string that is the import path, github.com/miekg/dns, from which we need to create
+		// an url in the form: https://github.com/miekg/dns/blob/dcb0117c0a48f73fec66233f04a798bd1beb122f/AUTHORS
+		// in case of github, or
+		// https://gitlab.com/miekg/dns/-/blob/dcb0117c0a48f73fec66233f04a798bd1beb122f/AUTHORS
+		// in case of gitlab.
+		path := strings.TrimPrefix(s, imp)
+		if strings.Contains(s, "gitlab") {
+			return "https://" + imp + "/-/blob/" + config.GitRef + path
+		}
+		return "https://" + imp + "/blob/" + config.GitRef + path
+	}
 
 	tmpl, err := readTemplate("package.txt", pkgTemplate)
 	if err != nil {
