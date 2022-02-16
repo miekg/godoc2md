@@ -36,6 +36,7 @@ var (
 
 	flgImport  = flag.String("import", "", "import path for the package")
 	flgReplace = flag.String("replace", "", "replace package source: from:to")
+	flgRef     = flag.String("gitref", "master", "git ref to use for generating the files' link")
 )
 
 func usage() {
@@ -68,6 +69,7 @@ func main() {
 		SrcLinkFormat:     *srcLinkFormat,
 		Verbose:           *verbose,
 		Replace:           replace,
+		GitRef:            *flgRef,
 	}
 
 	err := godoc2md.Transform(os.Stdout, pkgName, *flgImport, config)
