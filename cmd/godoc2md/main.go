@@ -15,7 +15,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/miekg/godoc2md"
 )
@@ -35,7 +34,7 @@ var (
 	srcLinkFormat = flag.String("srclink", "", "if set, format for entire source link")
 
 	flgImport  = flag.String("import", "", "import path for the package")
-	flgReplace = flag.String("replace", "", "replace package source: from:to")
+	flgReplace = flag.String("replace", "", "replace package source with import path")
 	flgRef     = flag.String("gitref", "master", "git ref to use for generating the files' link")
 )
 
@@ -53,26 +52,18 @@ func main() {
 	}
 	pkgName := flag.Arg(0)
 
-	replace := map[string]string{}
-	if *flgReplace != "" {
-		rs := strings.SplitN(*flgReplace, ":", 2)
-		if len(rs) < 2 {
-			log.Fatal("Need from:to in -replace")
-		}
-		replace[rs[0]] = rs[1]
-	}
-
 	config := &godoc2md.Config{
 		ShowTimestamps:    *showTimestamps,
 		DeclLinks:         *declLinks,
 		SrcLinkHashFormat: *srcLinkHashFormat,
 		SrcLinkFormat:     *srcLinkFormat,
 		Verbose:           *verbose,
-		Replace:           replace,
+		Replace:           *flgReplace,
+		Import:            *flgImport,
 		GitRef:            *flgRef,
 	}
 
-	err := godoc2md.Transform(os.Stdout, pkgName, *flgImport, config)
+	err := godoc2md.Transform(os.Stdout, pkgName, config)
 	if err != nil {
 		log.Fatal(err)
 	}
