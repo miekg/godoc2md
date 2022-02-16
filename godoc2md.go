@@ -14,7 +14,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"path"
 	"strings"
 	"text/template"
@@ -45,6 +44,7 @@ type Config struct {
 	ShowTimestamps    bool
 	DeclLinks         bool
 	Verbose           bool
+	Replace           map[string]string
 }
 
 func commentMdFunc(comment string) string {
@@ -66,7 +66,8 @@ func preFunc(text string) string {
 // Removed code line that always substracted 10 from the value of `line`.
 // Made format for the source link hash configurable to support source control platforms other than Github.
 // Original Source https://github.com/golang/tools/blob/master/godoc/godoc.go#L540
-func genSrcPosLinkFunc(srcLinkFormat, srcLinkHashFormat string) func(s string, line, low, high int) string {
+// The replace map will replace any prefix of the generated string with the value of that key.
+func genSrcPosLinkFunc(srcLinkFormat, srcLinkHashFormat string, replace map[string]string) func(s string, line, low, high int) string {
 	return func(s string, line, low, high int) string {
 		if srcLinkFormat != "" {
 			return fmt.Sprintf(srcLinkFormat, s, line, low, high)
@@ -86,17 +87,21 @@ func genSrcPosLinkFunc(srcLinkFormat, srcLinkHashFormat string) func(s string, l
 		if line > 0 {
 			fmt.Fprintf(&buf, srcLinkHashFormat, line) // no need for URL escaping
 		}
-		return buf.String()
+		b := buf.String()
+		for k, v := range replace {
+			if strings.HasPrefix(b, k) {
+				b = strings.Replace(b, k, v, 1)
+				break
+			}
+		}
+		return b
 	}
 }
 
-func readTemplate(name, data string) *template.Template {
+func readTemplate(name, data string) (*template.Template, error) {
 	// be explicit with errors (for app engine use)
 	t, err := template.New(name).Funcs(pres.FuncMap()).Funcs(funcs).Parse(data)
-	if err != nil {
-		log.Fatal("readTemplate: ", err)
-	}
-	return t
+	return t, err
 }
 
 func kebabFunc(text string) string {
@@ -112,19 +117,20 @@ func bitscapeFunc(text string) string {
 	return s
 }
 
-// Godoc2md turns your godoc into markdown
-func Godoc2md(out io.Writer, path, imp string, config *Config) {
+// Transform turns your godoc into markdown.
+func Transform(out io.Writer, path, imp string, config *Config) error {
 	corpus := godoc.NewCorpus(fs)
 	corpus.Verbose = config.Verbose
 	pres = godoc.NewPresentation(corpus)
 	pres.TabWidth = 4
 	pres.ShowTimestamps = config.ShowTimestamps
 	pres.DeclLinks = config.DeclLinks
-	pres.URLForSrcPos = genSrcPosLinkFunc(config.SrcLinkFormat, config.SrcLinkHashFormat)
+	pres.URLForSrcPos = genSrcPosLinkFunc(config.SrcLinkFormat, config.SrcLinkHashFormat, config.Replace)
 
-	tmpl := readTemplate("package.txt", pkgTemplate)
-
-	if err := write(out, fs, pres, tmpl, path, imp); err != nil {
-		log.Print(err)
+	tmpl, err := readTemplate("package.txt", pkgTemplate)
+	if err != nil {
+		return err
 	}
+
+	return write(out, fs, pres, tmpl, path, imp)
 }
