@@ -13,6 +13,10 @@ import (
 	"github.com/miekg/godoc2md"
 )
 
+var (
+	flgParallel = flag.Int("p", 5, "run this many goroutines in parallel")
+)
+
 func main() {
 	flag.Parse()
 	if len(flag.Args()) != 2 {
@@ -29,7 +33,7 @@ func main() {
 	repos := bytes.Split(repof, []byte{'\n'})
 
 	var wg sync.WaitGroup
-	sem := make(chan int, 5) // make 5 an option
+	sem := make(chan int, *flgParallel)
 	for i, r := range repos {
 		if len(r) == 0 { // last line
 			continue
