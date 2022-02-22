@@ -15,6 +15,7 @@ import (
 
 var (
 	flgParallel = flag.Int("p", 5, "run this many goroutines in parallel")
+	flgBranch   = flag.String("b", "main", "default branch to use")
 )
 
 func main() {
@@ -40,7 +41,7 @@ func main() {
 		}
 		log.Printf("Looking at %d, %s", i, r)
 
-		branch := "master"
+		branch := *flgBranch
 		rs := bytes.Fields(r)
 		repo := string(rs[0])
 		if len(rs) == 2 {

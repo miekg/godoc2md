@@ -16,4 +16,4 @@ Then as a separate step the README.md can be converted to HTML.
 Each repo path should be an URL that contains the Go code, this should also be the import path.
 
 Optionally you can specify a git branch seperated by white space on the same line as well. If not
-given it defaults to 'master'.
+given it defaults to 'main'.
