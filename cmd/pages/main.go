@@ -111,9 +111,8 @@ func clone(repo, branch string) ([]byte, error) {
 
 	config := &godoc2md.Config{
 		DeclLinks: true,
-		//		Replace:           *flgReplace,
-		Import: imp,
-		GitRef: "main", // from file
+		Import:    imp,
+		GitRef:    branch,
 	}
 
 	buf := &bytes.Buffer{}
