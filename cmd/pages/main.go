@@ -1,8 +1,10 @@
 package main
 
 import (
+	"archive/zip"
 	"bytes"
 	"flag"
+	"fmt"
 	"log"
 	"net/url"
 	"os"
@@ -16,6 +18,7 @@ import (
 var (
 	flgParallel = flag.Int("p", 5, "run this many goroutines in parallel")
 	flgBranch   = flag.String("b", "main", "default branch to use")
+	flgZip      = flag.Bool("z", false, "target is zip file instead of directory")
 )
 
 func main() {
@@ -27,13 +30,27 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := mkdirAll(flag.Arg(1)); err != nil {
-		log.Fatal(err)
+	if !*flgZip {
+		if err := mkdirAll(flag.Arg(1)); err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	repos := bytes.Split(repof, []byte{'\n'})
 
+	ziprw := &zip.Writer{}
+	if *flgZip {
+		archive, err := os.Create(flag.Arg(1))
+		if err != nil {
+			log.Fatal(err)
+		}
+		ziprw = zip.NewWriter(archive)
+		defer archive.Close()
+		defer ziprw.Close()
+	}
+
 	var wg sync.WaitGroup
+	var zipmu sync.Mutex
 	sem := make(chan int, *flgParallel)
 	for i, r := range repos {
 		if len(r) == 0 { // last line
@@ -55,21 +72,34 @@ func main() {
 
 			buf, err := clone(repo, branch)
 			if err != nil {
-				log.Printf("Not good: %v", err)
+				log.Printf("Failed to clone repo: %s: %v", repo, err)
 				return
 			}
 			url, _ := url.Parse(repo) // parsed in clone() as well
-			dir := path.Join(flag.Arg(1), path.Join(url.Host, url.Path))
-			out := path.Join(dir, "README.md")
-			if err := mkdirAll(dir); err != nil {
-				log.Printf("Not good %s: %v", repo, err)
+			readme := path.Join(path.Join(url.Host, url.Path), "README.md")
+			if !*flgZip {
+				readme = path.Join(flag.Arg(1), readme)
+				if err := mkdirAll(path.Dir(readme)); err != nil {
+					log.Printf("Not good %s: %v", repo, err)
+					return
+				}
+				log.Printf("Writing to markdown to %s", readme)
+				if err := os.WriteFile(readme, buf, 0600); err != nil {
+					log.Printf("Not good %s: %v", repo, err)
+					return
+				}
 				return
 			}
-			log.Printf("Writing to markdown to %s", out)
-			if err := os.WriteFile(out, buf, 0600); err != nil {
-				log.Printf("Not good %s: %v", repo, err)
-				return
+			// zipper stuff, protected by zipmu, as create/write must be done in a single step.
+			zipmu.Lock()
+			w, err := ziprw.Create(readme)
+			if err != nil {
+				log.Printf("Failed to create file %q in zip, for %s: %v", readme, repo, err)
 			}
+			if _, err := w.Write(buf); err != nil {
+				log.Printf("Failed to write markdown %q to zip, for %s: %v", readme, repo, err)
+			}
+			zipmu.Unlock()
 		}()
 	}
 	wg.Wait()
@@ -100,7 +130,7 @@ func clone(repo, branch string) ([]byte, error) {
 
 	out, err := git.CombinedOutput()
 	if err != nil {
-		return out, err
+		return out, fmt.Errorf("Failed to run git command %q: %v", git, err)
 	}
 
 	url, err := url.Parse(repo)
