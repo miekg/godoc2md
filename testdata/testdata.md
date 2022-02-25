@@ -4,19 +4,19 @@
 * [Overview](#pkg-overview)
 * [Index](#pkg-index)
 
-## <a name="pkg-overview">Overview</a>
+## Overview {#pkg-overview}
 
 
 
-## <a name="pkg-index">Index</a>
+## Index {#pkg-index}
 * [Constants](#pkg-constants)
 
 
-#### <a name="pkg-files">Package files</a>
+#### Package files {#pkg-files}
 [testdata.go](https://testdata/blob/master/testdata.go)
 
 
-## <a name="pkg-constants">Constants</a>
+## Constants {#pkg-constants}
 ``` go
 const TestData = 1
 ```

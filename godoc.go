@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// BUG(miek): there is a bug here.
+
 // Package godoc2md creates a markdown representation of a package's godoc.
 //
 // This is forked from https://github.com/davecheney/godoc2md.  The primary difference being that this version is
