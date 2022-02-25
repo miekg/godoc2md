@@ -12,13 +12,18 @@ import (
 	"path"
 	"sync"
 
+	"github.com/gomarkdown/markdown"
+	"github.com/gomarkdown/markdown/html"
+	"github.com/gomarkdown/markdown/parser"
 	"github.com/miekg/godoc2md"
+	"github.com/mmarkdown/mmark/mparser"
 )
 
 var (
 	flgParallel = flag.Int("p", 5, "run this many goroutines in parallel")
 	flgBranch   = flag.String("b", "main", "default branch to use")
 	flgZip      = flag.Bool("z", false, "target is zip file instead of directory")
+	flgHtml     = flag.Bool("h", false, "create HTML from markdown before writing")
 )
 
 func main() {
@@ -75,8 +80,24 @@ func main() {
 				log.Printf("Failed to clone repo: %s: %v", repo, err)
 				return
 			}
+			if *flgHtml {
+				p := parser.NewWithExtensions(mparser.Extensions)
+				doc := markdown.Parse(buf, p)
+
+				opts := html.RendererOptions{
+					Flags:     html.CommonFlags | html.FootnoteNoHRTag | html.FootnoteReturnLinks | html.CompletePage,
+					Generator: `  <meta name="GENERATOR" content="github.com/gomarkdown/markdown`,
+					Title:     repo,
+				}
+				r := html.NewRenderer(opts)
+				buf = markdown.Render(doc, r)
+			}
+
 			url, _ := url.Parse(repo) // parsed in clone() as well
 			readme := path.Join(path.Join(url.Host, url.Path), "README.md")
+			if *flgHtml {
+				readme = path.Join(path.Join(url.Host, url.Path), "README.html")
+			}
 			if !*flgZip {
 				readme = path.Join(flag.Arg(1), readme)
 				if err := mkdirAll(path.Dir(readme)); err != nil {

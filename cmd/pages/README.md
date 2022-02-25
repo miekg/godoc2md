@@ -9,8 +9,6 @@ It will:
 3. capture the result in /path/path/to/repo/README.md
 4. delete the repo
 
-Then as a separate step the README.md can be converted to HTML.
-
 ## Repos
 
 Each repo path should be an URL that contains the Go code, this should also be the import path.
