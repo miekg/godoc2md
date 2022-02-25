@@ -13,14 +13,12 @@ import (
 	"sync"
 
 	"github.com/miekg/godoc2md"
-	"github.com/yuin/goldmark"
 )
 
 var (
 	flgParallel = flag.Int("p", 5, "run this many goroutines in parallel")
 	flgBranch   = flag.String("b", "main", "default branch to use")
 	flgZip      = flag.Bool("z", false, "target is zip file instead of directory")
-	flgHtml     = flag.Bool("h", false, "transform markdown in HTML before writing")
 )
 
 func main() {
@@ -77,19 +75,8 @@ func main() {
 				log.Printf("Failed to clone repo: %s: %v", repo, err)
 				return
 			}
-			if *flgHtml {
-				html := &bytes.Buffer{}
-				if err := goldmark.Convert(buf, html); err != nil {
-					log.Printf("Not good %s: %v", repo, err)
-					return
-				}
-				buf = html.Bytes()
-			}
 			url, _ := url.Parse(repo) // parsed in clone() as well
 			readme := path.Join(path.Join(url.Host, url.Path), "README.md")
-			if *flgHtml {
-				readme = path.Join(path.Join(url.Host, url.Path), "README.html")
-			}
 			if !*flgZip {
 				readme = path.Join(flag.Arg(1), readme)
 				if err := mkdirAll(path.Dir(readme)); err != nil {
