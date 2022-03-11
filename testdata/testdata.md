@@ -23,7 +23,7 @@ const TestData = 1
 ```
 
 
-## func {#IsError} [IsError](https://testdata/blob/master/testdata.go?s=71:90#L6)
+## func [IsError](https://testdata/blob/master/testdata.go?s=71:90#L6) {#IsError}
 ``` go
 func IsError() bool
 ```
