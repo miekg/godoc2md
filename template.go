@@ -40,12 +40,12 @@ var pkgTemplate = `{{with .PDoc}}
 {{range .}}{{node $ .Decl | pre}}
 {{comment_md .Doc}}{{end}}{{end}}
 
-{{range .Funcs}}{{$name_html := html .Name}}## func {#{{$name_html}}} [{{$name_html}}]({{posLink_url $ .Decl}})
+{{range .Funcs}}{{$name_html := html .Name}}## func [{{$name_html}}]({{posLink_url $ .Decl}}) {#{{$name_html}}}
 {{node $ .Decl | pre}}
 {{comment_md .Doc}}
 {{example_html $ .Name}}
 {{callgraph_html $ "" .Name}}{{end}}
-{{range .Types}}{{$tname := .Name}}{{$tname_html := html .Name}}## type {#{{$tname_html}}} [{{$tname_html}}]({{posLink_url $ .Decl}})
+{{range .Types}}{{$tname := .Name}}{{$tname_html := html .Name}}## type [{{$tname_html}}]({{posLink_url $ .Decl}}) {#{{$tname_html}}}
 {{node $ .Decl | pre}}
 {{comment_md .Doc}}{{range .Consts}}
 {{node $ .Decl | pre }}
@@ -57,13 +57,13 @@ var pkgTemplate = `{{with .PDoc}}
 {{implements_html $ $tname}}
 {{methodset_html $ $tname}}
 
-{{range .Funcs}}{{$name_html := html .Name}}### func {#{{$name_html}}} [{{$name_html}}]({{posLink_url $ .Decl}})
+{{range .Funcs}}{{$name_html := html .Name}}### func [{{$name_html}}]({{posLink_url $ .Decl}}) {#{{$name_html}}}
 {{node $ .Decl | pre}}
 {{comment_md .Doc}}
 {{example_html $ .Name}}{{end}}
 {{callgraph_html $ "" .Name}}
 
-{{range .Methods}}{{$name_html := html .Name}}### func {#{{$tname_html}}.{{$name_html}}} ({{md .Recv}}) [{{$name_html}}]({{posLink_url $ .Decl}})
+{{range .Methods}}{{$name_html := html .Name}}### func ({{md .Recv}}) [{{$name_html}}]({{posLink_url $ .Decl}}) {#{{$tname_html}}.{{$name_html}}}
 {{node $ .Decl | pre}}
 {{comment_md .Doc}}
 {{$name := printf "%s_%s" $tname .Name}}{{example_html $ $name}}
