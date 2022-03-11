@@ -10,8 +10,6 @@
 // a library that can be used by other packages.
 package godoc2md
 
-//go:generate bin/goreadme github.com/WillAbides/godoc2md
-
 import (
 	"bytes"
 	"fmt"
