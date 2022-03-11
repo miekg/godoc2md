@@ -17,3 +17,14 @@ Each repo path should be an URL that contains the Go code, this should also be t
 
 Optionally you can specify a git branch seperated by white space on the same line as well. If not
 given it defaults to 'main'.
+
+By default this files should be named 'repos'
+
+## Endpoints
+
+There are two endpoints on this webserver:
+
+1. / search and index. Shows search box and an alphabetical index of all indexed repos.
+   If something is search the listed repos have only that keyword.
+2. g/ rendered contents of a package. I.e. g/github.com/miekg/dns shows in the contents
+  of the docs of that packages.

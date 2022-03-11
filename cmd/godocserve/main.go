@@ -1,114 +1,100 @@
 package main
 
+//go:generate go run files_generate.go repos
 import (
 	"bytes"
-	"flag"
+	"embed"
 	"fmt"
+	"html/template"
 	"log"
-	"net/url"
-	"os"
-	"os/exec"
-	"path"
-	"sync"
+	"net/http"
+	"path/filepath"
+	"strings"
 
-	"github.com/miekg/godoc2md"
+	"github.com/gomarkdown/markdown"
+	"github.com/gomarkdown/markdown/html"
+	"github.com/gomarkdown/markdown/parser"
+	"github.com/gorilla/mux"
+	"github.com/mmarkdown/mmark/mparser"
 )
 
-var (
-	flgParallel = flag.Int("p", 5, "run this many goroutines in parallel")
-	flgBranch   = flag.String("b", "main", "default branch to use")
-	flgZip      = flag.Bool("z", false, "target is zip file instead of directory")
-	flgHtml     = flag.Bool("h", false, "create HTML from markdown before writing")
-)
+// TODO: css and other fluff, put in assets/  see below
+
+//go:embed content/* assets/*
+var content embed.FS
 
 func main() {
-	flag.Parse()
-	if len(flag.Args()) != 1 {
-		log.Fatal("Need at least a file to read from")
-	}
-	repof, err := os.ReadFile(flag.Arg(0))
-	if err != nil {
-		log.Fatal(err)
-	}
-	repos := bytes.Split(repof, []byte{'\n'})
+	// fs Walk the dirs and index everything.
 
-	var wg sync.WaitGroup
-	sem := make(chan int, *flgParallel)
-	for i, r := range repos {
-		if len(r) == 0 { // last line
-			continue
-		}
-		log.Printf("Looking at %d, %s", i, r)
+	r := mux.NewRouter()
+	r.PathPrefix("/assets").Handler(http.FileServer(http.FS(content)))
+	r.PathPrefix("/g").HandlerFunc(renderHandler)
+	r.PathPrefix("/").HandlerFunc(searchHandler)
 
-		branch := *flgBranch
-		rs := bytes.Fields(r)
-		repo := string(rs[0])
-		if len(rs) == 2 {
-			branch = string(rs[1])
-		}
-
-		wg.Add(1)
-		sem <- 1
-		go func() {
-			defer func() { <-sem; wg.Done() }()
-
-			buf, err := clone(repo, branch)
-			if err != nil {
-				log.Printf("Failed to clone repo: %s: %v", repo, err)
-				return
-			}
-			url, _ := url.Parse(repo) // parsed in clone() as well
-			readme := path.Join(path.Join(url.Host, url.Path), "README.md")
-			if err := os.WriteFile(readme, buf, 0666); err != nil {
-				log.Printf("Failed to write markdown %q, for %s: %v", readme, repo, err)
-			}
-		}()
-	}
-	wg.Wait()
+	log.Print("Starting up on 8080")
+	log.Fatal(http.ListenAndServe(":8080", r))
 
 }
 
-func mkdirAll(path string) error {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		err := os.MkdirAll(path, 0777)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+func searchHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "Hello world!")
 }
 
-// clone clones the repo and returns the generated config or an error. If err is not nil
-// the returned buffer contains the output of the command that ran.
-func clone(repo, branch string) ([]byte, error) {
-	tmpdir, err := os.MkdirTemp("/tmp", "pages")
+func renderHandler(w http.ResponseWriter, r *http.Request) {
+	p, err := filepath.Abs(r.URL.Path)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	log.Print("path", p)
+	p = pathForReadme(p)
+
+	data, err := content.ReadFile(p)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	data, err = htmlify(data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(data)
+}
+
+func pathForReadme(p string) string {
+	p = strings.TrimPrefix(p, "/g")
+	p = filepath.Join("content", p+"/README.md")
+	return p
+}
+
+func htmlify(buf []byte) ([]byte, error) {
+	title := "todo"
+	p := parser.NewWithExtensions(mparser.Extensions)
+	doc := markdown.Parse(buf, p)
+
+	// create fragement so we need to inject header and footer stuff from assets dir
+	opts := html.RendererOptions{Flags: html.CommonFlags | html.FootnoteNoHRTag | html.FootnoteReturnLinks}
+	r := html.NewRenderer(opts)
+	buf = markdown.Render(doc, r)
+
+	headtmpl, err := template.ParseFS(content, "assets/head.html")
 	if err != nil {
 		return nil, err
 	}
-	defer func() { os.RemoveAll(tmpdir) }()
-
-	git := exec.Command("git", "clone", "--depth", "1", "--branch", branch, repo, tmpdir)
-	git.Dir = tmpdir
-
-	out, err := git.CombinedOutput()
-	if err != nil {
-		return out, fmt.Errorf("Failed to run git command %q: %v", git, err)
-	}
-
-	url, err := url.Parse(repo)
+	foottmpl, _ := template.ParseFS(content, "assets/foot.html")
 	if err != nil {
 		return nil, err
 	}
-	imp := path.Join(url.Host, url.Path)
-	log.Printf("Working on repo %q, with import %q in %q", repo, imp, tmpdir)
 
-	config := &godoc2md.Config{
-		DeclLinks: true,
-		Import:    imp,
-		GitRef:    branch,
-	}
+	headbuf := &bytes.Buffer{}
+	headtmpl.Execute(headbuf, title)
+	footbuf := &bytes.Buffer{}
+	foottmpl.Execute(footbuf, nil)
 
-	buf := &bytes.Buffer{}
-	err = godoc2md.Transform(buf, tmpdir, config)
-	return buf.Bytes(), err
+	buf = append(headbuf.Bytes(), buf...)
+	buf = append(buf, footbuf.Bytes()...)
+
+	return buf, nil
 }
