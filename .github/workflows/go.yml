@@ -18,8 +18,10 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v2
 
-    - name: Build
+    - name: Build godoc2md
       run: cd cmd/godoc2md; go build
+
+     -name: Build godocserve
       run: cd cmd/godocserve; go build
 
     - name: Test
