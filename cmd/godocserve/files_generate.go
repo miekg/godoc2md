@@ -90,7 +90,7 @@ func mkdirAll(path string) error {
 // clone clones the repo and returns the generated config or an error. If err is not nil
 // the returned buffer contains the output of the command that ran.
 func clone(repo, branch string) ([]byte, error) {
-	tmpdir, err := os.MkdirTemp("/tmp", "pages")
+	tmpdir, err := os.MkdirTemp("/tmp", "godocserve")
 	if err != nil {
 		return nil, err
 	}
