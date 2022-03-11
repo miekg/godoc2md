@@ -22,3 +22,8 @@ Note: `godoc2md` is a small cmd line that wrap this library. Library usage can b
 ## Bugs
 
 Examples are not rendered. Notes and Bugs section is either not rendered or done as HTML.
+
+# godocserve
+
+Godocserve is much more interesting as it will render all downloaded markdown as HTML and has
+a search option. See cmd/godocserve/README.md for more information.
