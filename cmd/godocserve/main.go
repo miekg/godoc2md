@@ -41,20 +41,19 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func renderHandler(w http.ResponseWriter, r *http.Request) {
-	p, err := filepath.Abs(r.URL.Path)
+	title, err := filepath.Abs(r.URL.Path)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	log.Print("path", p)
-	p = pathForReadme(p)
 
+	p := pathForReadme(title)
 	data, err := content.ReadFile(p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	data, err = htmlify(data)
+	data, err = htmlify(data, title)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -69,8 +68,7 @@ func pathForReadme(p string) string {
 	return p
 }
 
-func htmlify(buf []byte) ([]byte, error) {
-	title := "todo"
+func htmlify(buf []byte, title string) ([]byte, error) {
 	p := parser.NewWithExtensions(mparser.Extensions)
 	doc := markdown.Parse(buf, p)
 
