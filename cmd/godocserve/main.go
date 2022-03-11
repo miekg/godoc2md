@@ -4,11 +4,13 @@ package main
 import (
 	"bytes"
 	"embed"
+	"flag"
 	"io/fs"
 	"log"
 	"net/http"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -27,8 +29,14 @@ type searchContext struct {
 	bleve.Index
 }
 
+var (
+	flgBase = flag.String("b", "http://localhost", "base url for site")
+	flgPort = flag.Int("p", 8080, "port to listen on")
+)
+
 func main() {
-	repositories := map[string]struct{}{} // should probably get this from bleve as well
+	flag.Parse()
+
 	mapping := bleve.NewIndexMapping()
 	index, err := bleve.NewMemOnly(mapping)
 	if err != nil {
@@ -36,8 +44,6 @@ func main() {
 	}
 	if err := fs.WalkDir(content, "content", func(p string, d fs.DirEntry, walkErr error) error {
 		if d.Name() == "README.md" {
-			repositories[p] = struct{}{}
-			// index some data
 			data, err := content.ReadFile(p)
 			if err != nil {
 				return err
@@ -65,8 +71,8 @@ func main() {
 		s.searchHandler(w, r)
 	})
 
-	log.Print("Starting up on 8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Printf("Starting up on: %s:%d", *flgBase, *flgPort)
+	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(*flgPort), r))
 }
 
 func (s searchContext) searchHandler(w http.ResponseWriter, r *http.Request) {
@@ -181,5 +187,5 @@ func linkify(s string) string {
 	link := strings.TrimPrefix(s, "content/")
 	link = path.Dir(link)
 
-	return `<a href="http://localhost:8080/g/` + link + `">` + link + `</a>`
+	return `<a href="` + *flgBase + `:` + strconv.Itoa(*flgPort) + `/g/` + link + `">` + link + `</a>`
 }
