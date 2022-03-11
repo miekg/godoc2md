@@ -112,9 +112,11 @@ func clone(repo, branch string) ([]byte, error) {
 	log.Printf("Working on repo %q, with import %q in %q", repo, imp, tmpdir)
 
 	config := &godoc2md.Config{
-		DeclLinks: true,
-		Import:    imp,
-		GitRef:    branch,
+		DeclLinks:         true,
+		Import:            imp,
+		GitRef:            branch,
+		Replace:           tmpdir,
+		SrcLinkHashFormat: "#L%d",
 	}
 
 	buf := &bytes.Buffer{}
