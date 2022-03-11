@@ -22,6 +22,7 @@ Note: `godoc2md` is a small cmd line that wrap this library. Library usage can b
 ## Bugs
 
 Examples are not rendered. Notes and Bugs section is either not rendered or done as HTML.
+Subdirectories also doesn't look right.
 
 # godocserve
 
