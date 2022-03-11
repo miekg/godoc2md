@@ -3,6 +3,7 @@ module github.com/miekg/godoc2md
 go 1.17
 
 require (
+	github.com/blevesearch/bleve/v2 v2.3.1
 	github.com/gomarkdown/markdown v0.0.0-20220114203417-14399d5448c4
 	github.com/google/go-cmp v0.5.7
 	github.com/gorilla/mux v1.8.0
@@ -14,7 +15,6 @@ require (
 	github.com/BurntSushi/toml v1.0.0 // indirect
 	github.com/RoaringBitmap/roaring v0.9.4 // indirect
 	github.com/bits-and-blooms/bitset v1.2.0 // indirect
-	github.com/blevesearch/bleve/v2 v2.3.1 // indirect
 	github.com/blevesearch/bleve_index_api v1.0.1 // indirect
 	github.com/blevesearch/go-porterstemmer v1.0.3 // indirect
 	github.com/blevesearch/mmap-go v1.0.3 // indirect
