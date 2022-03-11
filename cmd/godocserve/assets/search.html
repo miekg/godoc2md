@@ -1,9 +1,11 @@
-<p class="search-title">Search Go Packages</p>
+<h1>Search Go packages</h1>
 
 <form action="/" method="POST">
 	<input type="search" name="search" autocomplete="off" placeholder="{{.Term}}"/>
 	<button type="submit">Search</button>
 </form>
+
+<h2>Packages</h2>
 
 <ol>
 {{range $index, $doc := .Hits}}
