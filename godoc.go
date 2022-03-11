@@ -10,8 +10,6 @@
 // a library that can be used by other packages.
 package godoc2md
 
-//go:generate bin/goreadme github.com/WillAbides/godoc2md
-
 import (
 	"bytes"
 	"fmt"
@@ -70,7 +68,6 @@ func preFunc(text string) string {
 // Removed code line that always substracted 10 from the value of `line`.
 // Made format for the source link hash configurable to support source control platforms other than Github.
 // Original Source https://github.com/golang/tools/blob/master/godoc/godoc.go#L540
-// The replace map will replace any prefix of the generated string with the value of that key.
 func genSrcPosLinkFunc(srcLinkFormat, srcLinkHashFormat string, config *Config) func(s string, line, low, high int) string {
 	return func(s string, line, low, high int) string {
 		if srcLinkFormat != "" {

@@ -25,7 +25,10 @@ func TestURLForFile(t *testing.T) {
 }
 
 func TestGoDoc(t *testing.T) {
-	config := &Config{Import: "testdata"}
+	config := &Config{
+		Import:            "testdata",
+		SrcLinkHashFormat: "#L%d",
+	}
 
 	buf := &bytes.Buffer{}
 	err := Transform(buf, "testdata", config)
