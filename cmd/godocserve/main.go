@@ -4,13 +4,14 @@ package main
 import (
 	"bytes"
 	"embed"
-	"fmt"
-	"html/template"
+	"io/fs"
 	"log"
 	"net/http"
 	"path/filepath"
 	"strings"
+	"text/template"
 
+	bleve "github.com/blevesearch/bleve/v2"
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
@@ -18,26 +19,99 @@ import (
 	"github.com/mmarkdown/mmark/mparser"
 )
 
-// TODO: css and other fluff, put in assets/  see below
-
 //go:embed content/* assets/*
 var content embed.FS
 
+type searchContext struct {
+	bleve.Index
+}
+
 func main() {
-	// fs Walk the dirs and index everything.
+	repositories := map[string]struct{}{} // should probably get this from bleve as well
+	mapping := bleve.NewIndexMapping()
+	index, err := bleve.NewMemOnly(mapping)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := fs.WalkDir(content, "content", func(p string, d fs.DirEntry, walkErr error) error {
+		if d.Name() == "README.md" {
+			repositories[p] = struct{}{}
+			// index some data
+			data, err := content.ReadFile(p)
+			if err != nil {
+				return err
+			}
+			// We need to convert this data to a string, otherwise things are not indexed correctly.
+			if err := index.Index(p, string(data)); err != nil {
+				return err
+
+			}
+		}
+		return nil
+	}); err != nil {
+		log.Fatal(err)
+	}
+	docs, _ := index.DocCount()
+	log.Printf("Indexed %d documents", docs)
 
 	r := mux.NewRouter()
 	r.PathPrefix("/assets").Handler(http.FileServer(http.FS(content)))
 	r.PathPrefix("/g").HandlerFunc(renderHandler)
-	r.PathPrefix("/").HandlerFunc(searchHandler)
+	r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s := searchContext{
+			Index: index,
+		}
+		s.searchHandler(w, r)
+	})
 
 	log.Print("Starting up on 8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
-
 }
 
-func searchHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Hello world!")
+func (s searchContext) searchHandler(w http.ResponseWriter, r *http.Request) {
+	term := r.FormValue("search")
+	var search *bleve.SearchRequest
+	if term == "" {
+		query := bleve.NewMatchAllQuery()
+		search = bleve.NewSearchRequest(query)
+	} else {
+		query := bleve.NewQueryStringQuery(term)
+		search = bleve.NewSearchRequest(query)
+	}
+
+	results, err := s.Search(search)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	FuncMap := template.FuncMap{
+		"linkify": linkify,
+	}
+
+	type tmplContext struct {
+		*bleve.SearchResult
+		Term string
+	}
+
+	searchtmpl, err := template.New("search.html").Funcs(FuncMap).ParseFS(content, "assets/search.html")
+	if err != nil {
+		panic(err)
+	}
+	searchbuf := &bytes.Buffer{}
+	ctx := &tmplContext{
+		SearchResult: results,
+		Term:         term,
+	}
+	if err := searchtmpl.Execute(searchbuf, ctx); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	buf := append(header("Search Results"), searchbuf.Bytes()...)
+	buf = append(buf, footer()...)
+
+	w.Write(buf)
 }
 
 func renderHandler(w http.ResponseWriter, r *http.Request) {
@@ -46,6 +120,7 @@ func renderHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	title = strings.TrimPrefix(title, "/g/")
 
 	p := pathForReadme(title)
 	data, err := content.ReadFile(p)
@@ -62,11 +137,7 @@ func renderHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
-func pathForReadme(p string) string {
-	p = strings.TrimPrefix(p, "/g")
-	p = filepath.Join("content", p+"/README.md")
-	return p
-}
+func pathForReadme(p string) string { return filepath.Join("content", p+"/README.md") }
 
 func htmlify(buf []byte, title string) ([]byte, error) {
 	p := parser.NewWithExtensions(mparser.Extensions)
@@ -77,22 +148,36 @@ func htmlify(buf []byte, title string) ([]byte, error) {
 	r := html.NewRenderer(opts)
 	buf = markdown.Render(doc, r)
 
-	headtmpl, err := template.ParseFS(content, "assets/head.html")
-	if err != nil {
-		return nil, err
-	}
-	foottmpl, _ := template.ParseFS(content, "assets/foot.html")
-	if err != nil {
-		return nil, err
-	}
-
-	headbuf := &bytes.Buffer{}
-	headtmpl.Execute(headbuf, title)
-	footbuf := &bytes.Buffer{}
-	foottmpl.Execute(footbuf, nil)
-
-	buf = append(headbuf.Bytes(), buf...)
-	buf = append(buf, footbuf.Bytes()...)
+	buf = append(header(title), buf...)
+	buf = append(buf, footer()...)
 
 	return buf, nil
+}
+
+func header(title string) []byte {
+	headtmpl, err := template.ParseFS(content, "assets/head.html")
+	if err != nil {
+		panic(err)
+	}
+	headbuf := &bytes.Buffer{}
+	headtmpl.Execute(headbuf, title)
+	return headbuf.Bytes()
+}
+
+func footer() []byte {
+	foottmpl, err := template.ParseFS(content, "assets/foot.html")
+	if err != nil {
+		panic(err)
+	}
+	footbuf := &bytes.Buffer{}
+	foottmpl.Execute(footbuf, nil)
+	return footbuf.Bytes()
+}
+
+// linkify converts "content/github.com/miekg/dns/README.md" in a link
+// <a href="http://localhost:8080/g/github.com/miekg/dns/README.md">github.com/miekg/dns/README.md</a>.
+func linkify(s string) string {
+	link := strings.TrimPrefix(s, "content/")
+
+	return `<a href="http://localhost:8080/g/` + link + `">` + link + `</a>`
 }
