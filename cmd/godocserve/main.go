@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"path"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -175,9 +176,10 @@ func footer() []byte {
 }
 
 // linkify converts "content/github.com/miekg/dns/README.md" in a link
-// <a href="http://localhost:8080/g/github.com/miekg/dns/README.md">github.com/miekg/dns/README.md</a>.
+// <a href="http://localhost:8080/g/github.com/miekg/dns">github.com/miekg/dns</a>.
 func linkify(s string) string {
 	link := strings.TrimPrefix(s, "content/")
+	link = path.Dir(link)
 
 	return `<a href="http://localhost:8080/g/` + link + `">` + link + `</a>`
 }

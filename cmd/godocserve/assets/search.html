@@ -8,7 +8,7 @@
 <ol>
 {{range $index, $doc := .Hits}}
 <li>
-	{{linkify $doc.ID | html}} ({{$doc.Score}})
+	{{linkify $doc.ID}} ({{$doc.Score}})
 </li>
 {{end}}
 </ol>
