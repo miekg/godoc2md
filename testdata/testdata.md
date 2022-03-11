@@ -10,6 +10,7 @@
 
 ## Index {#pkg-index}
 * [Constants](#pkg-constants)
+* [func IsError() bool](#IsError)
 
 
 #### Package files {#pkg-files}
@@ -20,3 +21,10 @@
 ``` go
 const TestData = 1
 ```
+
+
+## func {#IsError} [IsError](https://testdata/blob/master/testdata.go?s=71:90%!(EXTRA int=6))
+``` go
+func IsError() bool
+```
+IsError always returns false.
