@@ -33,6 +33,7 @@ var pkgTemplate = `{{with .PDoc}}
 {{range .}}[{{.|filename|html}}]({{.|srcLink|html}}) {{end}}
 {{end}}
 
+
 {{with .Consts}}## Constants {#pkg-constants}
 {{range .}}{{node $ .Decl | pre}}
 {{comment_md .Doc}}{{end}}{{end}}
@@ -80,5 +81,10 @@ var pkgTemplate = `{{with .PDoc}}
 </ul>
 {{end}}
 {{end}}
+{{end}}
+
+{{with .Dirs}}
+#### Subdirectories {#pkg-subdirectories}
+{{range .List}} {{if .HasPkg}} {{.Name}} {{end}} {{end}}
 {{end}}
 `
