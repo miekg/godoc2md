@@ -46,6 +46,10 @@ func main() {
 		if len(r) == 0 { // last line
 			continue
 		}
+		if bytes.HasPrefix(r, []byte("#")) { // comment
+			continue
+		}
+
 		log.Printf("Looking at %d, %s", i, r)
 
 		branch := *flgBranch
@@ -101,7 +105,7 @@ func transform(repo, branch string) error {
 		return err
 	}
 	imp := path.Join(url.Host, url.Path)
-	log.Printf("Working on repo %q, with import %q in %q", repo, imp, tmpdir)
+	log.Printf("Cloned repo %q, with import %q in %q", repo, imp, tmpdir)
 
 	config := &godoc2md.Config{
 		DeclLinks:         true,
@@ -124,9 +128,10 @@ func transform(repo, branch string) error {
 				return nil
 			}
 			imptmp := config.Import
-			defer func() { config.Import = imptmp }()
-			if rel != "" {
+			defer func() { config.Import = imptmp; config.SubPackage = rel }()
+			if rel != "" && rel != "." {
 				config.Import += "/" + rel
+				config.SubPackage = rel
 			}
 
 			buf := &bytes.Buffer{}

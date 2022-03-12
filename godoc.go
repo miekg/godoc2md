@@ -46,6 +46,7 @@ type Config struct {
 	Verbose           bool
 	Replace           string
 	Import            string
+	SubPackage        string // If this is a subpackage, this hold the relative import
 	GitRef            string // commit, tag, or branch of the repo.
 }
 
@@ -90,7 +91,7 @@ func genSrcPosLinkFunc(srcLinkFormat, srcLinkHashFormat string, config *Config) 
 		}
 		b := buf.String()
 		if strings.HasPrefix(b, config.Replace) {
-			url := urlForFile(b[len(config.Replace):], config.Import, config.GitRef)
+			url := urlForFile(b[len(config.Replace):], config.Import, config.GitRef, config.SubPackage)
 			return url
 		}
 		return b
@@ -131,7 +132,7 @@ func Transform(out io.Writer, path string, config *Config) error {
 	pres.DeclLinks = config.DeclLinks
 	pres.URLForSrcPos = genSrcPosLinkFunc(config.SrcLinkFormat, config.SrcLinkHashFormat, config)
 	pres.URLForSrc = func(s string) string {
-		return urlForFile(s, config.Import, config.GitRef)
+		return urlForFile(s, config.Import, config.GitRef, config.SubPackage)
 	}
 
 	tmpl, err := readTemplate("package.txt", pkgTemplate)
@@ -144,12 +145,16 @@ func Transform(out io.Writer, path string, config *Config) error {
 
 // urlForFile takes path, imp and git ref and sep and creates a link to a file in
 // github or gitlab.
-func urlForFile(s, imp, ref string) string {
+func urlForFile(s, imp, ref, subpkg string) string {
 	// We get a string that is the import path, github.com/miekg/dns, from which we need to create
 	// an url in the form: https://github.com/miekg/dns/blob/dcb0117c0a48f73fec66233f04a798bd1beb122f/AUTHORS
 	// in case of github, or
 	// https://gitlab.com/miekg/dns/-/blob/dcb0117c0a48f73fec66233f04a798bd1beb122f/AUTHORS
 	// in case of gitlab.
+	// if subpkg is not empty that suffix is stripped from the import path
+	if subpkg != "" {
+		imp = strings.TrimSuffix(imp, "/"+subpkg)
+	}
 	path := strings.TrimPrefix(s, imp)
 	sep := seperatorForHub(s)
 	return "https://" + imp + sep + "/blob/" + ref + path

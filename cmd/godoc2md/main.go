@@ -41,7 +41,7 @@ var (
 )
 
 func usage() {
-	_, _ = fmt.Fprintf(os.Stderr, "usage: godoc2md [options] package\n")
+	fmt.Fprintf(os.Stderr, "usage: godoc2md [options] package\n")
 	flag.PrintDefaults()
 	os.Exit(2)
 }
@@ -78,9 +78,10 @@ func main() {
 				return nil
 			}
 			imp := config.Import
-			defer func() { config.Import = imp }()
-			if rel != "" {
+			defer func() { config.Import = imp; config.SubPackage = "" }()
+			if rel != "" && rel != "." {
 				config.Import += "/" + rel
+				config.SubPackage = rel
 			}
 
 			if err := godoc2md.Transform(os.Stdout, p, config); err != nil {
