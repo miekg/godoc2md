@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// BUG(miek): there is a bug here.
-
 // Package godoc2md creates a markdown representation of a package's godoc.
 //
 // This is forked from https://github.com/davecheney/godoc2md.  The primary difference being that this version is
@@ -98,7 +96,6 @@ func genSrcPosLinkFunc(srcLinkFormat, srcLinkHashFormat string, config *Config) 
 }
 
 func readTemplate(name, data string) (*template.Template, error) {
-	// be explicit with errors (for app engine use)
 	t, err := template.New(name).Funcs(pres.FuncMap()).Funcs(funcs).Parse(data)
 	return t, err
 }

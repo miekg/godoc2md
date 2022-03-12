@@ -82,9 +82,9 @@ var pkgTemplate = `{{with .PDoc}}
 {{end}}
 {{end}}
 {{end}}
-
-{{with .Dirs}}
+{{if .PDoc}} {{with .Dirs}}
 #### Subdirectories {#pkg-subdirectories}
 {{range .List}} {{if .HasPkg}} {{.Name}} {{end}} {{end}}
+{{end}}
 {{end}}
 `

@@ -15,6 +15,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/miekg/godoc2md"
 )
@@ -50,7 +52,7 @@ func main() {
 	if flag.NArg() != 1 {
 		usage()
 	}
-	pkgName := flag.Arg(0)
+	pkgName := flag.Arg(0) // actually path
 
 	config := &godoc2md.Config{
 		ShowTimestamps:    *showTimestamps,
@@ -63,7 +65,29 @@ func main() {
 		GitRef:            *flgRef,
 	}
 
-	err := godoc2md.Transform(os.Stdout, pkgName, config)
+	err := filepath.Walk(pkgName,
+		func(p string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if !info.IsDir() {
+				return nil
+			}
+			rel, _ := filepath.Rel(pkgName, p)
+			if len(rel) > 2 && strings.HasPrefix(rel, ".") {
+				return nil
+			}
+			imp := config.Import
+			defer func() { config.Import = imp }()
+			if rel != "" {
+				config.Import += rel
+			}
+
+			if err := godoc2md.Transform(os.Stdout, p, config); err != nil {
+				log.Println(err)
+			}
+			return nil
+		})
 	if err != nil {
 		log.Fatal(err)
 	}
