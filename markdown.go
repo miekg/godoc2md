@@ -16,9 +16,11 @@ func write(w io.Writer, fs vfs.NameSpace, pres *godoc.Presentation, tmpl *templa
 
 	fs.Bind(path, vfs.OS(path), "/", vfs.BindReplace)
 	info := pres.GetPkgPageInfo(path, imp, 0)
+
 	/*
 		for i := range info.Examples {
-			println(info.Examples[i].Name)
+			set := token.NewFileSet()
+			printer.Fprint(os.Stderr, set, info.Examples[i].Code)
 
 		}
 	*/
