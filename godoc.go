@@ -24,14 +24,16 @@ var (
 	pres *godoc.Presentation
 	fs   = vfs.NameSpace{}
 
-	funcs = map[string]interface{}{
-		"comment_md":  commentMdFunc,
-		"base":        path.Base,
-		"md":          mdFunc,
-		"pre":         preFunc,
-		"kebab":       kebabFunc,
-		"bitscape":    bitscapeFunc, // Escape [] for bitbucket confusion
-		"trim_prefix": strings.TrimPrefix,
+	// Funcs contains the functions used in the template. Of these only subdir_format might be
+	// of interest to callers.
+	Funcs = map[string]interface{}{
+		"comment_md":    commentMdFunc,
+		"base":          path.Base,
+		"md":            mdFunc,
+		"pre":           preFunc,
+		"kebab":         kebabFunc,
+		"bitscape":      bitscapeFunc, // Escape [] for bitbucket confusion
+		"subdir_format": path.Base,
 	}
 )
 
@@ -96,7 +98,7 @@ func genSrcPosLinkFunc(srcLinkFormat, srcLinkHashFormat string, config *Config) 
 }
 
 func readTemplate(name, data string) (*template.Template, error) {
-	t, err := template.New(name).Funcs(pres.FuncMap()).Funcs(funcs).Parse(data)
+	t, err := template.New(name).Funcs(pres.FuncMap()).Funcs(Funcs).Parse(data)
 	return t, err
 }
 

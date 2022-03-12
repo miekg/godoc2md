@@ -80,7 +80,7 @@ func main() {
 			imp := config.Import
 			defer func() { config.Import = imp }()
 			if rel != "" {
-				config.Import += rel
+				config.Import += "/" + rel
 			}
 
 			if err := godoc2md.Transform(os.Stdout, p, config); err != nil {

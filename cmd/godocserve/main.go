@@ -78,6 +78,7 @@ func (s searchContext) searchHandler(w http.ResponseWriter, r *http.Request) {
 	term := r.FormValue("search")
 	var search *bleve.SearchRequest
 	if term == "" {
+		// TODO: sort these
 		query := bleve.NewMatchAllQuery()
 		search = bleve.NewSearchRequest(query)
 	} else {

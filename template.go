@@ -82,9 +82,9 @@ var pkgTemplate = `{{with .PDoc}}
 {{end}}
 {{end}}
 {{end}}
-{{if .PDoc}} {{with .Dirs}}
+{{if .PDoc}} {{$import := .PDoc.ImportPath}} {{with .Dirs}}
 #### Subdirectories {#pkg-subdirectories}
-{{range .List}} {{if .HasPkg}} {{.Name}} {{end}} {{end}}
+{{range .List}} {{if .HasPkg}} {{subdir_format (printf "%s/%s" $import .Name) }} {{end}} {{end}}
 {{end}}
 {{end}}
 `
