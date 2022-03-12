@@ -29,3 +29,8 @@ There are two endpoints on this web server:
    If something is searched, the listed repos have only that keyword in them.
 2. g/ rendered contents of a package. I.e. g/github.com/miekg/dns shows in the contents
   of the docs of that packages.
+
+## Bugs
+
+Subdirectories are not indexed and thus have no README.md, they are mentioned, but not linked from
+the main pkg docs.
