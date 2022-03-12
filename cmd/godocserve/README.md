@@ -1,11 +1,13 @@
 # Godocserve
 
-Godocserve will take a file containing Go repositories links (one per line).
+Godocserve will take a file containing Go repositories links (one per line). It will create a simple
+webserver that allows to show and search for all the documenation. Similar to go.pkg.dev it prefixes
+the doc with the README.md - if found in that repo.
 
-It will:
+Specifically it
 
-1. download (--depth 1) each repo (5 in parallel) in the go generate setup
-2. run gogo2doc on the repo
+1. downloads (--depth 1) each repo (5 in parallel) in the go generate setup
+2. gather the docs for this repo (also the subpackages(!))
 3. capture the result in /path/to/repo/README.md
 4. Index the contents for search
 5. Use that path to serve HTML for the docs (via mmark)

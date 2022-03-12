@@ -36,8 +36,8 @@ func main() {
 	}
 	repos := bytes.Split(repof, []byte{'\n'})
 
-	// override this function to add a link to the subdir docs.
-	// also see linkify
+	// Override this function to add a link to the subdir docs.
+	// Also see linkify.
 	godoc2md.Funcs["subdir_format"] = func(s string) string { return `<a href="/g/` + s + `">` + path.Base(s) + `</a>` }
 
 	var wg sync.WaitGroup
@@ -135,11 +135,19 @@ func transform(repo, branch string) error {
 			}
 
 			buf := &bytes.Buffer{}
+			// If there is a README.md add that too, under a # README section, the docs will then follow under a # Documentation section.
+			if readmebuf, err := os.ReadFile(path.Join(p, "README.md")); err == nil {
+				buf.WriteString("# README\n\n")
+				buf.Write(readmebuf)
+				buf.WriteString("\n# Documentation\n\n")
+			}
+
 			err = godoc2md.Transform(buf, p, config)
 			if buf.Len() < 10 { // bit of a cop out, but this means "no docs found"
 				return nil
 			}
 
+			// Create output.
 			readme := path.Join(config.Import, "README.md")
 			readme = path.Join("content", readme)
 			if err := mkdirAll(path.Dir(readme)); err != nil {
