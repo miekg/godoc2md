@@ -6,6 +6,7 @@ require (
 	github.com/blevesearch/bleve/v2 v2.3.1
 	github.com/gomarkdown/markdown v0.0.0-20220114203417-14399d5448c4
 	github.com/google/go-cmp v0.5.7
+	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/mmarkdown/mmark v2.0.40+incompatible
 	golang.org/x/tools v0.1.9
@@ -28,6 +29,7 @@ require (
 	github.com/blevesearch/zapx/v13 v13.3.3 // indirect
 	github.com/blevesearch/zapx/v14 v14.3.3 // indirect
 	github.com/blevesearch/zapx/v15 v15.3.3 // indirect
+	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/golang/protobuf v1.3.2 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/mschoch/smat v0.2.0 // indirect

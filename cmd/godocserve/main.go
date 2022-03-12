@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"os"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -18,6 +19,7 @@ import (
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/mmarkdown/mmark/mparser"
 )
@@ -61,14 +63,17 @@ func main() {
 	log.Printf("Indexed %d documents", docs)
 
 	r := mux.NewRouter()
-	r.PathPrefix("/assets").Handler(http.FileServer(http.FS(content)))
-	r.PathPrefix("/g").HandlerFunc(renderHandler)
-	r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	//    r.Handle("/admin", handlers.LoggingHandler(os.Stdout, http.HandlerFunc(ShowAdminDashboard)))
+	////   r.HandleFunc("/", ShowIndex)
+
+	r.PathPrefix("/assets").Handler(handlers.LoggingHandler(os.Stdout, http.FileServer(http.FS(content))))
+	r.PathPrefix("/g").Handler(handlers.LoggingHandler(os.Stdout, http.HandlerFunc(renderHandler)))
+	r.PathPrefix("/").Handler(handlers.LoggingHandler(os.Stdout, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s := searchContext{
 			Index: index,
 		}
 		s.searchHandler(w, r)
-	})
+	})))
 
 	log.Printf("Starting up on: :%d", *flgPort)
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(*flgPort), r))
