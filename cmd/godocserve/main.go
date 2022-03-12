@@ -30,7 +30,6 @@ type searchContext struct {
 }
 
 var (
-	flgBase = flag.String("b", "http://localhost", "base url for site")
 	flgPort = flag.Int("p", 8080, "port to listen on")
 )
 
@@ -71,7 +70,7 @@ func main() {
 		s.searchHandler(w, r)
 	})
 
-	log.Printf("Starting up on: %s:%d", *flgBase, *flgPort)
+	log.Printf("Starting up on: :%d", *flgPort)
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(*flgPort), r))
 }
 
@@ -182,10 +181,10 @@ func footer() []byte {
 }
 
 // linkify converts "content/github.com/miekg/dns/README.md" in a link
-// <a href="http://localhost:8080/g/github.com/miekg/dns">github.com/miekg/dns</a>.
+// <a href="/g/github.com/miekg/dns">github.com/miekg/dns</a>.
 func linkify(s string) string {
 	link := strings.TrimPrefix(s, "content/")
 	link = path.Dir(link)
 
-	return `<a href="` + *flgBase + `:` + strconv.Itoa(*flgPort) + `/g/` + link + `">` + link + `</a>`
+	return `<a href="/g/` + link + `">` + link + `</a>`
 }
