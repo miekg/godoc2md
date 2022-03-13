@@ -152,10 +152,6 @@ func transform(repo, branch string) error {
 			}
 
 			err = godoc2md.Transform(buf, p, config)
-			if buf.Len() < 10 { // bit of a cop out, but this means "no docs found"
-				return nil
-			}
-
 			// Create output.
 			readme := path.Join(config.Import, "README.md")
 			readme = path.Join("content", readme)
