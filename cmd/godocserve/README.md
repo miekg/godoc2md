@@ -12,7 +12,9 @@ Specifically it
 4. Index the contents for search
 5. Use that path to serve HTML for the docs (via mmark)
 
-It features an index and search page and will display all godoc learned from the downloaded repos.
+It features an index and search page and will display all godoc generated from the downloaded repos.
+go:embed is used to add all the files to the binary, so you can just copy it around and not worry
+about the files on disk.
 
 ## Repos
 
@@ -22,6 +24,8 @@ Optionally you can specify a git branch separated by white space on the same lin
 given it defaults to 'main'.
 
 By default this files should be named 'repos' (as this is used in the go generate line).
+
+`#` can be used to signal a comment in the file itself.
 
 ## Endpoints
 
