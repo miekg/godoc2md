@@ -20,6 +20,7 @@ var content embed.FS
 
 type searchContext struct {
 	bleve.Index
+	Size uint64
 }
 
 var (
@@ -59,6 +60,7 @@ func main() {
 	r.PathPrefix("/").Handler(handlers.LoggingHandler(os.Stdout, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s := searchContext{
 			Index: index,
+			Size:  docs,
 		}
 		s.searchHandler(w, r)
 	})))

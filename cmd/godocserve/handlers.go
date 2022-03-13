@@ -28,8 +28,7 @@ func (s searchContext) searchHandler(w http.ResponseWriter, r *http.Request) {
 		request = bleve.NewSearchRequest(query)
 	}
 
-	docs, _ := s.DocCount()
-	request.Size = int(docs)
+	request.Size = int(s.Size)
 	results, err := s.Search(request)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
