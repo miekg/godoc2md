@@ -128,8 +128,12 @@ func transform(repo, branch string) error {
 				return nil
 			}
 			imptmp := config.Import
-			defer func() { config.Import = imptmp; config.SubPackage = rel }()
+			defer func() { config.Import = imptmp; config.SubPackage = "" }()
 			if rel != "" && rel != "." {
+				if !checkForGoFiles(p) { // no go files, skip
+					log.Printf("No Go files in %s, skipping", p)
+					return nil
+				}
 				config.Import += "/" + rel
 				config.SubPackage = rel
 			}
@@ -167,4 +171,21 @@ func transform(repo, branch string) error {
 
 		})
 	return err
+}
+
+// checkForGoFiles returns true when there are files in p with a .go extension.
+func checkForGoFiles(p string) bool {
+	des, err := os.ReadDir(p)
+	if err != nil {
+		return false
+	}
+	for _, de := range des {
+		if de.IsDir() {
+			continue
+		}
+		if ext := path.Ext(de.Name()); ext == ".go" {
+			return true
+		}
+	}
+	return false
 }

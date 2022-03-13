@@ -18,17 +18,19 @@ import (
 
 func (s searchContext) searchHandler(w http.ResponseWriter, r *http.Request) {
 	term := r.FormValue("search")
-	var search *bleve.SearchRequest
+	var request *bleve.SearchRequest
 	if term == "" {
 		// TODO: sort these
 		query := bleve.NewMatchAllQuery()
-		search = bleve.NewSearchRequest(query)
+		request = bleve.NewSearchRequest(query)
 	} else {
 		query := bleve.NewQueryStringQuery(term)
-		search = bleve.NewSearchRequest(query)
+		request = bleve.NewSearchRequest(query)
 	}
 
-	results, err := s.Search(search)
+	docs, _ := s.DocCount()
+	request.Size = int(docs)
+	results, err := s.Search(request)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
