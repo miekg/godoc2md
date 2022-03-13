@@ -9,19 +9,24 @@ import (
 	"golang.org/x/tools/godoc/vfs"
 )
 
-const target = "/target"
-
 // write writes the godoc in pres to w.
 func write(w io.Writer, fs vfs.NameSpace, pres *godoc.Presentation, tmpl *template.Template, path, imp string) error {
-
-	fs.Bind(path, vfs.OS(path), "/", vfs.BindReplace)
+	fs.Bind(path, vfs.OS(path), "/", vfs.BindReplace) // ??
 	info := pres.GetPkgPageInfo(path, imp, 0)
 
 	/*
 		for i := range info.Examples {
-			set := token.NewFileSet()
-			printer.Fprint(os.Stderr, set, info.Examples[i].Code)
+			fmt.Fprintf(os.Stderr, "** %s\n", info.Examples[i].Name)
 
+			set := token.NewFileSet()
+			if info.Examples[i].Play != nil {
+				format.Node(os.Stderr, set, info.Examples[i].Play)
+			} else {
+				format.Node(os.Stderr, set, info.Examples[i].Code)
+			}
+			println(info.Examples[i].Doc)
+			println()
+			println()
 		}
 	*/
 
@@ -31,10 +36,5 @@ func write(w io.Writer, fs vfs.NameSpace, pres *godoc.Presentation, tmpl *templa
 	if info.Err != nil {
 		return info.Err
 	}
-
-	if err := tmpl.Execute(w, info); err != nil {
-		return err
-	}
-
-	return nil
+	return tmpl.Execute(w, info)
 }

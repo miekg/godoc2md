@@ -137,8 +137,13 @@ func transform(repo, branch string) error {
 			buf := &bytes.Buffer{}
 			// If there is a README.md add that too, under a # README section, the docs will then follow under a # Documentation section.
 			if readmebuf, err := os.ReadFile(path.Join(p, "README.md")); err == nil {
+				// add top level link to jump to Documentation
+				buf.WriteString("[Package documentation](#documentation)\n\n")
 				buf.WriteString("# README\n\n")
 				buf.Write(readmebuf)
+				buf.WriteString("\n# Documentation\n\n")
+			} else {
+				// Add documenation search, so that #documentation always works, regardless of readme or note
 				buf.WriteString("\n# Documentation\n\n")
 			}
 
