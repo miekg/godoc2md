@@ -50,7 +50,7 @@ func main() {
 			continue
 		}
 
-		log.Printf("Looking at %d, %s", i, r)
+		log.Printf("%q, being looked at, as %d of %d", r, i+1, len(repos)-1)
 
 		branch := *flgBranch
 		rs := bytes.Fields(r)
@@ -65,7 +65,7 @@ func main() {
 			defer func() { <-sem; wg.Done() }()
 
 			if err := transform(repo, branch); err != nil {
-				log.Printf("Failed to clone repo: %s: %v", repo, err)
+				log.Printf("%q, failed to clone: %v", repo, err)
 				return
 			}
 		}()
@@ -105,7 +105,7 @@ func transform(repo, branch string) error {
 		return err
 	}
 	imp := path.Join(url.Host, url.Path)
-	log.Printf("Cloned repo %q, with import %q in %q", repo, imp, tmpdir)
+	log.Printf("%q, cloned succesfully, with import %q in %q", repo, imp, tmpdir)
 
 	config := &godoc2md.Config{
 		DeclLinks:         true,
@@ -131,7 +131,7 @@ func transform(repo, branch string) error {
 			defer func() { config.Import = imptmp; config.SubPackage = "" }()
 			if rel != "" && rel != "." {
 				if !checkForGoFiles(p) { // no go files, skip
-					log.Printf("No Go files in %s, skipping", p)
+					log.Printf("%q, no Go files in %s, skipping", repo, p)
 					return nil
 				}
 				config.Import += "/" + rel
@@ -156,13 +156,13 @@ func transform(repo, branch string) error {
 			readme := path.Join(config.Import, "README.md")
 			readme = path.Join("content", readme)
 			if err := mkdirAll(path.Dir(readme)); err != nil {
-				log.Printf("Failed to create containing directory %q, for %s: %v", path.Dir(readme), repo, err)
+				log.Printf("%q, failed to create containing directory %q, for %s: %v", repo, path.Dir(readme), err)
 			}
 
 			if err := os.WriteFile(readme, buf.Bytes(), 0666); err != nil {
-				log.Printf("Failed to write markdown %q, for %s: %v", readme, repo, err)
+				log.Printf("%q, failed to write markdown %q, for %s: %v", repo, readme, err)
 			}
-			log.Printf("Wrote markdown into %q, for %s", readme, repo)
+			log.Printf("%q, wrote markdown into %q", repo, readme)
 			return nil
 
 		})
