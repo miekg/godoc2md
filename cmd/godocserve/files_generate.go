@@ -145,13 +145,22 @@ func transform(repo, branch string) error {
 				buf.WriteString("# README\n\n")
 				buf.WriteString("[Package documentation](#documentation)\n\n")
 				buf.Write(readmebuf)
-				buf.WriteString("\n# Documentation\n\n")
-			} else {
-				// Add documenation search, so that #documentation always works, regardless of readme or note
-				buf.WriteString("\n# Documentation\n\n")
 			}
 
-			err = godoc2md.Transform(buf, p, config)
+			gobuf := &bytes.Buffer{}
+			err = godoc2md.Transform(gobuf, p, config)
+			if err != nil {
+				log.Printf("%q, failed to generate markdown", repo)
+				return nil
+			}
+
+			if gobuf.Len() < 10 && buf.Len() == 0 { // bit of a cop out, but this means "no docs found", only return if also no readme
+				return nil
+			}
+
+			buf.WriteString("\n# Documentation\n\n")
+			buf.Write(gobuf.Bytes())
+
 			// Create output.
 			readme := path.Join(config.Import, "README.md")
 			readme = path.Join("content", readme)
