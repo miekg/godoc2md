@@ -138,15 +138,6 @@ func transform(repo, branch string) error {
 				config.SubPackage = rel
 			}
 
-			buf := &bytes.Buffer{}
-			// If there is a README.md add that too, under a # README section, the docs will then follow under a # Documentation section.
-			if readmebuf, err := os.ReadFile(path.Join(p, "README.md")); err == nil {
-				// add top level link to jump to Documentation
-				buf.WriteString("# README\n\n")
-				buf.WriteString("[Package documentation](#documentation)\n\n")
-				buf.Write(readmebuf)
-			}
-
 			gobuf := &bytes.Buffer{}
 			err = godoc2md.Transform(gobuf, p, config)
 			if err != nil {
@@ -154,10 +145,24 @@ func transform(repo, branch string) error {
 				return nil
 			}
 
-			if gobuf.Len() < 10 && buf.Len() == 0 { // bit of a cop out, but this means "no docs found", only return if also no readme
+			rbuf := &bytes.Buffer{}
+			// If there is a README.md add that too, under a # README section, the docs will then follow under a # Documentation section.
+			if readmebuf, err := os.ReadFile(path.Join(p, "README.md")); err == nil {
+				rbuf.WriteString("# README\n\n")
+
+				if gobuf.Len() > 10 { // there is go code docs, link to that.
+					rbuf.WriteString("[Package documentation](#documentation)\n\n")
+				}
+				rbuf.Write(readmebuf)
+			}
+
+			if gobuf.Len() < 10 && rbuf.Len() == 0 { // bit of a cop out, but this means "no docs found", only return if also no readme
 				return nil
 			}
 
+			// assemble it all
+			buf := &bytes.Buffer{}
+			buf.Write(rbuf.Bytes())
 			buf.WriteString("\n# Documentation\n\n")
 			buf.Write(gobuf.Bytes())
 
