@@ -163,7 +163,9 @@ func transform(repo, branch string) error {
 			// assemble it all
 			buf := &bytes.Buffer{}
 			buf.Write(rbuf.Bytes())
-			buf.WriteString("\n# Documentation\n\n")
+			if gobuf.Len() >= 10 {
+				buf.WriteString("\n# Documentation\n\n")
+			}
 			buf.Write(gobuf.Bytes())
 
 			// Create output.
