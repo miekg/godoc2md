@@ -21,9 +21,6 @@ import (
 )
 
 var (
-	pres *godoc.Presentation
-	fs   = vfs.NameSpace{}
-
 	// Funcs contains the functions used in the template. Of these only subdir_format might be
 	// of interest to callers.
 	Funcs = map[string]interface{}{
@@ -98,7 +95,7 @@ func genSrcPosLinkFunc(srcLinkFormat, srcLinkHashFormat string, config *Config) 
 	}
 }
 
-func readTemplate(name, data string) (*template.Template, error) {
+func readTemplate(pres *godoc.Presentation, name, data string) (*template.Template, error) {
 	t, err := template.New(name).Funcs(pres.FuncMap()).Funcs(Funcs).Parse(data)
 	return t, err
 }
@@ -124,9 +121,11 @@ func Transform(out io.Writer, path string, config *Config) error {
 		config.GitRef = "master" // main??
 	}
 
+	fs := vfs.NameSpace{}
 	corpus := godoc.NewCorpus(fs)
 	corpus.Verbose = config.Verbose
-	pres = godoc.NewPresentation(corpus)
+
+	pres := godoc.NewPresentation(corpus)
 	pres.TabWidth = 4
 	pres.ShowTimestamps = config.ShowTimestamps
 	pres.DeclLinks = config.DeclLinks
@@ -135,7 +134,7 @@ func Transform(out io.Writer, path string, config *Config) error {
 		return urlForFile(s, config.Import, config.GitRef, config.SubPackage)
 	}
 
-	tmpl, err := readTemplate("package.txt", pkgTemplate)
+	tmpl, err := readTemplate(pres, "package.txt", pkgTemplate)
 	if err != nil {
 		return err
 	}
