@@ -156,17 +156,21 @@ func transform(repo, branch string) error {
 				rbuf.Write(readmebuf)
 			}
 
-			if gobuf.Len() < 10 && rbuf.Len() == 0 { // bit of a cop out, but this means "no docs found", only return if also no readme
+			empty := checkForDocs(gobuf.Bytes())
+			if empty && rbuf.Len() == 0 { // bit of a cop out, but this means "no docs found", only return if also no readme
+				log.Printf("%q, no docs and no README.md in %s, skipping", repo, p)
 				return nil
 			}
 
 			// assemble it all
 			buf := &bytes.Buffer{}
 			buf.Write(rbuf.Bytes())
-			if gobuf.Len() >= 10 {
+			if rbuf.Len() > 0 { // If there is a readme, prefix the pkg docs with this header
 				buf.WriteString("\n# Documentation\n\n")
 			}
-			buf.Write(gobuf.Bytes())
+			if !empty {
+				buf.Write(gobuf.Bytes())
+			}
 
 			// Create output.
 			readme := path.Join(config.Import, "README.md")
@@ -200,4 +204,12 @@ func checkForGoFiles(p string) bool {
 		}
 	}
 	return false
+}
+
+// checkForDocs check if bug actually has content, if we index go binaries that don't
+// export anything we end up with almost empty file that only has 1 line: the import path: "> importpath"
+func checkForDocs(buf []byte) bool {
+	stripped := bytes.TrimSpace(buf)
+	// if remaining line start with '>' we consider it empty
+	return bytes.HasPrefix(stripped, []byte("> "))
 }

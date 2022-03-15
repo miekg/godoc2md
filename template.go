@@ -33,7 +33,6 @@ var pkgTemplate = `{{with .PDoc}}
 {{range .}}[{{.|filename|html}}]({{.|srcLink|html}}) {{end}}
 {{end}}
 
-
 {{with .Consts}}## Constants {#pkg-constants}
 {{range .}}{{node $ .Decl | pre}}
 {{comment_md .Doc}}{{end}}{{end}}
