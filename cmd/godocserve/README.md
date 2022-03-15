@@ -42,3 +42,7 @@ There are two endpoints on this web server:
 2. go generate
 3. go build
 4. ./godocserve
+
+## Adjusting
+
+Just edit assets/head.tmpl and the other files to your liking and recompile.
