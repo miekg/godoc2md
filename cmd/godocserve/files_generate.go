@@ -165,10 +165,10 @@ func transform(repo, branch string) error {
 			// assemble it all
 			buf := &bytes.Buffer{}
 			buf.Write(rbuf.Bytes())
-			if rbuf.Len() > 0 { // If there is a readme, prefix the pkg docs with this header
-				buf.WriteString("\n# Documentation\n\n")
-			}
 			if !empty {
+				if rbuf.Len() > 0 { // If there is a readme, prefix the pkg docs with this header
+					buf.WriteString("\n# Documentation\n\n")
+				}
 				buf.Write(gobuf.Bytes())
 			}
 
@@ -210,6 +210,9 @@ func checkForGoFiles(p string) bool {
 // export anything we end up with almost empty file that only has 1 line: the import path: "> importpath"
 func checkForDocs(buf []byte) bool {
 	stripped := bytes.TrimSpace(buf)
+	if len(stripped) == 0 {
+		return true
+	}
 	// if remaining line start with '>' we consider it empty
 	return bytes.HasPrefix(stripped, []byte("> "))
 }
