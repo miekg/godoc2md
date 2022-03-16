@@ -50,13 +50,17 @@ func main() {
 			continue
 		}
 
-		log.Printf("%q, being looked at, as %d of %d", r, i+1, len(repos)-1)
+		log.Printf("Line %d of %d, being looked at: %s", i+1, len(repos)-1, r)
 
 		branch := *flgBranch
+		vanity := ""
 		rs := bytes.Fields(r)
 		repo := string(rs[0])
-		if len(rs) == 2 {
+		if len(rs) > 0 {
 			branch = string(rs[1])
+		}
+		if len(rs) > 1 {
+			vanity = string(rs[2])
 		}
 
 		wg.Add(1)
@@ -64,7 +68,7 @@ func main() {
 		go func() {
 			defer func() { <-sem; wg.Done() }()
 
-			if err := transform(repo, branch); err != nil {
+			if err := transform(repo, branch, vanity); err != nil {
 				log.Printf("%q, failed to clone: %v", repo, err)
 				return
 			}
@@ -85,7 +89,7 @@ func mkdirAll(path string) error {
 }
 
 // transform clones the repo and writes the documentation markdown to the correct directory.
-func transform(repo, branch string) error {
+func transform(repo, branch, vanity string) error {
 	tmpdir, err := os.MkdirTemp("/tmp", "godocserve")
 	if err != nil {
 		return err
@@ -104,7 +108,11 @@ func transform(repo, branch string) error {
 	if err != nil {
 		return err
 	}
-	imp := path.Join(url.Host, url.Path)
+	// if no vanity default to git repo
+	imp := vanity
+	if imp == "" {
+		imp = path.Join(url.Host, url.Path)
+	}
 	log.Printf("%q, cloned succesfully, with import %q in %q", repo, imp, tmpdir)
 
 	config := &godoc2md.Config{

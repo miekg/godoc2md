@@ -21,7 +21,8 @@ about the files on disk.
 Each repo path should be an URL that contains the Go code, this should also be the import path.
 
 Optionally you can specify a git branch separated by white space on the same line as well. If not
-given it defaults to 'main'.
+given it defaults to 'main'. And further more if you need a vanity import you can specify this after
+the branch. This does make the branch mandatory to be specified.
 
 By default this files should be named 'repos' (as this is used in the go generate line).
 
