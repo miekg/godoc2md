@@ -36,12 +36,8 @@ var (
 	mdPre     = []byte("\t")
 	mdNewline = []byte("\n")
 	mdH3      = []byte("### ")
+	mdItem    = []byte("* ")
 )
-
-//so we just have to have one lint exception
-func writeIgnore(w io.Writer, p []byte) {
-	_, _ = w.Write(p) //nolint:errcheck
-}
 
 // Emphasize and escape a line of text for HTML. URLs are converted into links.
 func emphasize(w io.Writer, line string) {
@@ -53,29 +49,29 @@ func emphasize(w io.Writer, line string) {
 		// m >= 6 (two parenthesized sub-regexps in matchRx, 1st one is urlRx)
 
 		// write text before match
-		writeIgnore(w, []byte(line[0:m[0]]))
+		w.Write([]byte(line[0:m[0]]))
 
 		// analyze match
 		match := line[m[0]:m[1]]
 
 		// if URL then write as link
 		if m[2] >= 0 {
-			writeIgnore(w, htmlA)
+			w.Write(htmlA)
 			template.HTMLEscape(w, []byte(match))
-			writeIgnore(w, htmlAq)
+			w.Write(htmlAq)
 		}
 
 		// write match
-		writeIgnore(w, []byte(match))
+		w.Write([]byte(match))
 
 		if m[2] >= 0 {
-			writeIgnore(w, htmlEnda)
+			w.Write(htmlEnda)
 		}
 
 		// advance
 		line = line[m[1]:]
 	}
-	writeIgnore(w, []byte(line))
+	w.Write([]byte(line))
 }
 
 func indentLen(s string) int {
@@ -176,8 +172,7 @@ type block struct {
 var nonAlphaNumRx = regexp.MustCompile(`[^a-zA-Z0-9]`)
 
 func anchorID(line string) string {
-	// Add a "hdr-" prefix to avoid conflicting with IDs used for package symbols.
-	return "hdr-" + nonAlphaNumRx.ReplaceAllString(line, "_")
+	return "hdr_" + strings.ToLower(nonAlphaNumRx.ReplaceAllString(line, "_"))
 }
 
 // toMd converts comment text to formatted Markdown.
@@ -197,30 +192,57 @@ func anchorID(line string) string {
 //
 // URLs in the comment text are converted into links.
 func toMd(w io.Writer, text string) {
+	// range over the blocks to fetch the headers to create a table of contents
+	closeToc := func() {}
+	for _, b := range blocks(text) {
+		if b.op == opHead {
+			closeToc = func() { w.Write(mdNewline); w.Write(mdNewline) }
+			// [title](#link)
+			w.Write(mdItem)
+			w.Write([]byte("["))
+			id := ""
+			for _, line := range b.lines {
+				if id == "" {
+					id = anchorID(line)
+				}
+				w.Write([]byte(line))
+			}
+			w.Write([]byte("]"))
+			w.Write([]byte("(#"))
+			io.WriteString(w, id)
+			w.Write([]byte(")"))
+			w.Write(mdNewline)
+		}
+	}
+	closeToc()
+
 	for _, b := range blocks(text) {
 		switch b.op {
 		case opPara:
 			for _, line := range b.lines {
 				emphasize(w, line)
 			}
-			writeIgnore(w, mdNewline) // trailing newline to emulate </p>
+			w.Write(mdNewline) // trailing newline to emulate </p>
 		case opHead:
-			writeIgnore(w, mdH3)
+			w.Write(mdH3)
 			id := ""
 			for _, line := range b.lines {
 				if id == "" {
 					id = anchorID(line)
 				}
-				writeIgnore(w, []byte(line))
+				w.Write([]byte(line))
+				w.Write([]byte(" {#"))
+				io.WriteString(w, id)
+				w.Write([]byte("}"))
 			}
-			writeIgnore(w, mdNewline)
+			w.Write(mdNewline)
 		case opPre:
-			writeIgnore(w, mdNewline)
+			w.Write(mdNewline)
 			for _, line := range b.lines {
-				writeIgnore(w, mdPre)
+				w.Write(mdPre)
 				emphasize(w, line)
 			}
-			writeIgnore(w, mdNewline)
+			w.Write(mdNewline)
 		}
 	}
 }
