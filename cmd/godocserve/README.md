@@ -22,7 +22,8 @@ Each repo path should be an URL that contains the Go code, this should also be t
 
 Optionally you can specify a git branch separated by white space on the same line as well. If not
 given it defaults to 'main'. And further more if you need a vanity import you can specify this after
-the branch. This does make the branch mandatory to be specified.
+the branch. This does make the branch mandatory to be specified. It will also check and parse the
+go.mod file and extract the path there.
 
 By default this files should be named 'repos' (as this is used in the go generate line).
 
