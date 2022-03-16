@@ -56,10 +56,10 @@ func main() {
 		vanity := ""
 		rs := bytes.Fields(r)
 		repo := string(rs[0])
-		if len(rs) > 0 {
+		if len(rs) > 1 {
 			branch = string(rs[1])
 		}
-		if len(rs) > 1 {
+		if len(rs) > 2 {
 			vanity = string(rs[2])
 		}
 
