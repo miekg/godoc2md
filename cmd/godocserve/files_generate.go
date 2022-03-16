@@ -18,6 +18,7 @@ import (
 	"sync"
 
 	"github.com/miekg/godoc2md"
+	"golang.org/x/mod/modfile"
 )
 
 var (
@@ -102,6 +103,12 @@ func transform(repo, branch, vanity string) error {
 	out, err := git.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("Failed to run git command %q: %v, output %s", git, err, out)
+	}
+
+	// Use module path if not vanity path found.
+	mod := goModModule(tmpdir)
+	if vanity == "" && mod != "" {
+		vanity = mod
 	}
 
 	url, err := url.Parse(repo)
@@ -223,4 +230,21 @@ func checkForDocs(buf []byte) bool {
 	}
 	// if remaining line start with '>' we consider it empty
 	return bytes.HasPrefix(stripped, []byte("> "))
+}
+
+// goModModule looks for path/go.mod and extracts the module path. If nothing is found the empty string
+// is returned.
+func goModModule(p string) string {
+	buf, err := os.ReadFile(path.Join(p, "go.mod"))
+	if err != nil {
+		return ""
+	}
+	f, err := modfile.ParseLax("go.mod", buf, nil)
+	if err != nil {
+		return ""
+	}
+	if f.Module != nil {
+		return f.Module.Mod.Path
+	}
+	return ""
 }
