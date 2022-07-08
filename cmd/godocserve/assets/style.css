@@ -828,3 +828,7 @@ a.error {
     white-space: pre-wrap;
   }
 }
+
+blockquote {
+    font-style: italic;
+}
