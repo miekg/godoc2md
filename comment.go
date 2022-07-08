@@ -82,6 +82,17 @@ func indentLen(s string) int {
 	return i
 }
 
+func isPre(s string) int {
+	i := 0
+	for i < len(s) && (s[i] == ' ' || s[i] == '\t') {
+		if s[i] == '\t' {
+			i += 3
+		}
+		i++
+	}
+	return i
+}
+
 func isBlank(s string) bool {
 	return len(s) == 0 || (len(s) == 1 && s[0] == '\n')
 }
@@ -274,7 +285,7 @@ func blocks(text string) []block {
 			lastWasBlank = true
 			continue
 		}
-		if indentLen(line) > 0 {
+		if isPre(line) > 3 {
 			// close paragraph
 			close()
 
